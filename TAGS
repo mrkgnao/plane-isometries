@@ -1,0 +1,47 @@
+
+./isom.hs,1019
+data Plane Plane2,3
+data Plane = XY XY2,3
+data Plane = XY | YZ YZ2,3
+data Plane = XY | YZ | XZ XZ2,3
+data Vec Vec3,4
+data Vec = Vec Vec3,4
+data Angle Angle4,5
+data Angle = Angle Angle4,5
+type Flip Flip5,6
+data Trs Trs7,8
+data Trs = Trs Trs7,8
+data Rot Rot9,10
+data Rot = Rot Rot9,10
+data Ref Ref11,12
+data Ref = Ref Ref11,12
+data BasicIsomBasicIsom14,15
+  = T T15,16
+  | R R16,17
+  | F F17,18
+add add20,21
+add add22,23
+reorderTrs reorderTrs33,34
+reorderTrs reorderTrs36,37
+data Isom Isom63,64
+data Isom = Isom Isom63,64
+mkIsom mkIsom65,66
+mkIsom mkIsom66,67
+rotate rotate68,69
+rotate rotate69,70
+rotateL rotateL71,72
+rotateL rotateL72,73
+data Matrix Matrix74,75
+data Matrix = Mat Mat74,75
+instance instance76,77
+apply apply80,81
+apply apply81,82
+reflect reflect83,84
+reflect reflect84,85
+reflectL reflectL87,88
+reflectL reflectL88,89
+rotMatrix rotMatrix90,91
+rotMatrix rotMatrix91,92
+prod prod93,94
+prod prod94,95
+main main96,97
