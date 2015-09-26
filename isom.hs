@@ -3,7 +3,10 @@ import Data.Number.CReal
 data Plane = XY | YZ | XZ deriving Show
 data Vec = Vec CReal CReal deriving Show
 data Angle = Angle CReal deriving Show
-type Flip = Bool
+data Flip
+  = Yes
+  | No
+  deriving (Show, Eq)
 -- | Translation
 data Trs = Trs Vec deriving Show
 -- | Rotation
@@ -11,87 +14,101 @@ data Rot = Rot Angle deriving Show
 -- | Reflection or not
 data Ref = Ref Flip deriving Show
 
--- These are the generators of the group M.
-data BasicIsom
-  = T Trs -- translations by a vector
-  | R Rot -- rotations by some angle
-  | F Ref -- reflections (about the x-axis)
-  deriving (Show)
+data Matrix = Mat CReal CReal CReal CReal
 
-add :: BasicIsom -> BasicIsom -> BasicIsom
+reflectAcrossX :: Matrix
+reflectAcrossX = Mat 1 0 0 (-1)
 
-add (T (Trs (Vec x1 y1))) (T (Trs (Vec x2 y2))) =
-  T . Trs $
-  Vec (x1 + x2)
-      (y1 + y2)
+instance Show Matrix where
+  show (Mat a b c d) = show a ++ " " ++ show b ++ "\n" ++
+                       show c ++ " " ++ show d
 
-add (R (Rot (Angle a1))) (R (Rot (Angle a2))) =
-  R . Rot $ (Angle (a1 + a2))
+instance Num Vec where
+  (Vec x1 y1) + (Vec x2 y2) = Vec (x1 + x2) (y1 + y2)
+  (Vec x1 y1) - (Vec x2 y2) = Vec (x1 - x2) (y1 - y2)
 
-add (F (Ref a)) (F (Ref b)) = F . Ref $ a /= b -- nice little xor, huh?
+instance Num Trs where
+  (Trs t1) + (Trs t2) = Trs $ t1 + t2
+  (Trs t1) - (Trs t2) = Trs $ t1 - t2
 
--- | Push the translations to the front.
-reorderTrs :: [BasicIsom] -> [BasicIsom]
+instance Num Angle where
+  (Angle a1) + (Angle a2) = Angle (a1 + a2)
+  (Angle a1) - (Angle a2) = Angle (a1 - a2)
 
--- Collapse consecutive anything
-reorderTrs (xs:a@(T _):b@(T _):ys) =
-  reorderTrs (xs : (add a b) : ys)
+instance Num Rot where
+  (Rot a1) + (Rot a2) = Rot $ a1 + a2
+  (Rot a1) - (Rot a2) = Rot $ a1 - a2
 
-reorderTrs [a@(T _),b@(T _)] = [add a b]
+instance Num Ref where
+  (Ref a) + (Ref b)
+    | a == b = Ref No
+    | otherwise = Ref Yes
 
-reorderTrs (xs:a@(R _):b@(R _):ys) =
-  reorderTrs (xs : (add a b) : ys)
+class BasicIsom a  where
+  (.+) :: a -> a -> a
+  rotBy :: Rot -> a -> a
+  refBy :: Ref -> a -> a
+  trsBy :: Trs -> a -> a
 
-reorderTrs (xs:a@(F _):b@(F _):ys) =
-  reorderTrs (xs : (add a b) : ys)
+instance BasicIsom Trs where
+  (Trs v1) .+ (Trs v2) = Trs $ v1 + v2
+  trsBy = (.+)
+  rotBy rot (Trs v) =
+    Trs $ prod (rotMatrix rot) v
+  refBy (Ref Yes) (Trs v) =
+    Trs $ prod reflectAcrossX v
+  refBy _ x = x
 
--- Skip nop-reflections
-reorderTrs (xs:r@(F a):t@(T s):ys) =
-  case a of
-    Ref True ->
-      reorderTrs (xs : T (reflectL a s) : r : ys)
-    Ref False -> reorderTrs (xs : t : ys)
+instance BasicIsom Rot where
+  (Rot a) .+ (Rot b) = Rot $ a + b
+  trsBy = const id
+  rotBy = (.+)
+  refBy (Ref Yes) (Rot (Angle a)) =
+    Rot . Angle $ (-a)
 
--- Skip nop-rotations as well
-reorderTrs (xs:r@(R rot):t@(T trs):ys) =
-  case rot of
-    Rot (Angle 0) -> reorderTrs (xs : t : ys)
-    _ ->
-      reorderTrs (xs : T (rotateL trs rot) : r : ys)
+instance BasicIsom Ref where
+  (Ref a) .+ (Ref b)
+    | a == b = Ref No
+    | otherwise = Ref Yes
+  trsBy = const id
+  rotBy = const id
+  refBy = (.+)
 
-reorderTrs l = l
+reflectRot :: Ref -> Rot -> Rot
+reflectRot (Ref Yes) (Rot (Angle x)) =
+  Rot . Angle $ (-x)
+reflectRot _ x = x
+
+rotMatrix :: Rot -> Matrix
+rotMatrix (Rot (Angle a)) =
+  Mat (cos a)
+      (-(sin a))
+      (sin a)
+      (cos a)
+
+prod :: Matrix -> Vec -> Vec
+prod (Mat a b c d) (Vec x y) =
+  Vec (a * x + b * y)
+      (c * x + d * y)
 
 data Isom = Isom Trs Rot Ref
 
 mkIsom :: Vec -> Angle -> Flip -> Isom
-mkIsom v a r = Isom (Trs v) (Rot a) (Ref r)
+mkIsom v a r =
+  Isom (Trs v)
+       (Rot a)
+       (Ref r)
 
-rotate :: Vec -> Angle -> Vec
-rotate v (Angle a) = prod (rotMatrix (Angle a)) v
+-- | Compose two isometries.
+-- This is done by starting with t1 r1 f1 t2 r2 f2 and reordering to combine
+-- similar isometries. Each time one isometry "passes through" another, the
+-- second one acts on the first. (Artin explains this far better than I can.)
 
-rotateL :: Trs -> Rot -> Trs
-rotateL (Trs v) (Rot a) = Trs $ rotate v a
-
-data Matrix = Mat CReal CReal CReal CReal
-
-instance Show Matrix where
-  show (Mat a b c d) = (show a) ++ " " ++ (show b) ++ "\n" ++
-                       (show c) ++ " " ++ (show d)
-
-apply :: Rot -> Vec -> Vec
-apply (Rot (Angle a)) = prod (rotMatrix (Angle a))
-
-reflect :: Ref -> Vec -> Vec
-reflect (Ref True) = prod (Mat 1 0 0 (-1))
-reflect _ = id
-
-reflectL :: Ref -> Trs -> Trs
-reflectL a (Trs v1) = Trs $ reflect a v1
-
-rotMatrix :: Angle -> Matrix
-rotMatrix (Angle a) = Mat (cos a) (- (sin a)) (sin a) (cos a)
-
-prod :: Matrix -> Vec -> Vec
-prod (Mat a b c d) (Vec x y) = Vec (a * x + b * y) (c * x + d * y)
+compose :: Isom -> Isom -> Isom
+compose (Isom trs1 rot1 ref1) (Isom trs2 rot2 ref2) =
+  Isom (trs1 + trs2'') (rot1 + rot2') (ref1 + ref2)
+  where trs2' = reflectTrs ref1 trs2
+        trs2'' = rotateBy rot1 trs2''
+        rot2' = reflectRot ref1 rot2
 
 main = undefined
