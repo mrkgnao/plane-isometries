@@ -1,47 +1,55 @@
 
-./isom.hs,1019
+./isom.hs,1338
 data Plane Plane2,3
 data Plane = XY XY2,3
 data Plane = XY | YZ YZ2,3
 data Plane = XY | YZ | XZ XZ2,3
-data Vec Vec3,4
-data Vec = Vec Vec3,4
-data Angle Angle4,5
-data Angle = Angle Angle4,5
-type Flip Flip5,6
-data Trs Trs7,8
-data Trs = Trs Trs7,8
-data Rot Rot9,10
-data Rot = Rot Rot9,10
-data Ref Ref11,12
-data Ref = Ref Ref11,12
-data BasicIsomBasicIsom14,15
-  = T T15,16
-  | R R16,17
-  | F F17,18
-add add20,21
-add add22,23
-reorderTrs reorderTrs33,34
-reorderTrs reorderTrs36,37
-data Isom Isom63,64
-data Isom = Isom Isom63,64
-mkIsom mkIsom65,66
-mkIsom mkIsom66,67
-rotate rotate68,69
-rotate rotate69,70
-rotateL rotateL71,72
-rotateL rotateL72,73
-data Matrix Matrix74,75
-data Matrix = Mat Mat74,75
-instance instance76,77
-apply apply80,81
-apply apply81,82
-reflect reflect83,84
-reflect reflect84,85
-reflectL reflectL87,88
-reflectL reflectL88,89
-rotMatrix rotMatrix90,91
-rotMatrix rotMatrix91,92
-prod prod93,94
-prod prod94,95
-main main96,97
+data Vec Vec4,5
+data Vec = Vec Vec4,5
+[vi,[vi6,7
+data Angle Angle10,11
+data Angle = Angle Angle10,11
+data Flip Flip12,13
+data Flip = Yes Yes12,13
+data Flip = Yes | No No12,13
+data Trs Trs15,16
+data Trs = Trs Trs15,16
+trs0 trs016,17
+data Rot Rot19,20
+data Rot = Rot Rot19,20
+[rot0,[rot021,22
+data Ref Ref26,27
+data Ref = Ref Ref26,27
+[ref0,[ref028,29
+data Matrix Matrix31,32
+data Matrix = Mat Mat31,32
+reflectAcrossX reflectAcrossX33,34
+reflectAcrossX reflectAcrossX34,35
+rotMatrix rotMatrix36,37
+rotMatrix rotMatrix37,38
+prod prod43,44
+prod prod44,45
+instance instance48,49
+class BasicIsom BasicIsom76,77
+class BasicIsom BasicIsom76,77
+  (.+).+77,78
+  trsBy trsBy78,79
+  rotBy rotBy79,80
+  refBy refBy80,81
+  toIsom toIsom81,82
+  apply apply82,83
+  inverse inverse83,84
+data Isom Isom126,127
+data Isom = Isom Isom126,127
+mkIsom mkIsom128,129
+mkIsom mkIsom129,130
+(#(134,135
+transform transform136,137
+transform transform137,138
+transformSeq transformSeq139,140
+transformSeq transformSeq140,141
+transformTimes transformTimes142,143
+transformTimes transformTimes143,144
+compose compose150,151
+compose compose151,152
+main main157,158
